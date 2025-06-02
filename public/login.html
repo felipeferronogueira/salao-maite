@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Salão Maitê</title>
+    <link rel="stylesheet" href="assets/css/login.css">
+</head>
+
+<body>
+
+    <div class="container">
+        <h2>Login</h2>
+        <form id="loginForm">
+            <input type="email" id="email" placeholder="Email" required>
+            <input type="password" id="senha" placeholder="Senha" required>
+            <button type="submit">Entrar</button>
+        </form>
+        <p id="mensagem"></p>
+    </div>
+
+</body>
+
+</html>
+
+<script>
+
+    const form = document.getElementById('loginForm');
+    const mensagem = document.getElementById('mensagem');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const email = document.getElementById('email').value;
+        const senha = document.getElementById('senha').value;
+
+        try {
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, senha })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                mensagem.innerText = 'Login realizado com sucesso!';
+                mensagem.style.color = 'green';
+                // Redireciona para a página principal (dashboard)
+                setTimeout(() => {
+                    window.location.href = './dashboard/dashAlerta.html'; // Ou dashboard.html futuramente
+                }, 1500);
+            } else {
+                mensagem.innerText = data.error;
+                mensagem.style.color = 'red';
+            }
+        } catch (error) {
+            mensagem.innerText = 'Erro na conexão.';
+            mensagem.style.color = 'red';
+            console.error(error);
+        }
+    });
+
+
+</script>

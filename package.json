@@ -1,0 +1,25 @@
+{
+  "name": "salao-maite",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/felipeferronogueira/salao-maite.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/felipeferronogueira/salao-maite/issues"
+  },
+  "homepage": "https://github.com/felipeferronogueira/salao-maite#readme",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.8",
+    "express": "^5.1.0"
+  }
+}
