@@ -1,6 +1,22 @@
+/* ================================
+   IMPORTAÇÃO DE FONTES
+=================================*/
+
+/* Importa a fonte "Epilogue" do Google Fonts com variações de peso de 100 até 900 */
+@import url('https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,100..900&display=swap');
+
+/* ================================
+   RESET E BODY
+=================================*/
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 body {
-  background-color: #fce4ec;
-  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #79635a, #f5f5dc);
+  font-family: 'Epilogue';
   display: flex;
   justify-content: center;
   align-items: center;
@@ -8,42 +24,144 @@ body {
   margin: 0;
 }
 
-.container {
-  background-color: white;
+/* ================================
+   CONTAINER PRINCIPAL
+=================================*/
+.container-background {
+  width: 70vw;
+  height: 75vh;
+  margin: 12vh auto 0 auto;
+  background: linear-gradient(to right, #fdf6e3, #e0cfc2);
+  border-radius: 25px;
+  box-shadow: 0 0 20px rgba(78, 52, 46, 0.2);
+  display: flex;
+  align-items: stretch;
+  position: relative;
+  overflow: hidden;
+  transition: 0.6s ease-in-out;
+  margin-top: 0vh;
+}
+
+.container-background::before {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: rgba(250, 245, 235, 0.2);
+  pointer-events: none;
+}
+
+/* ================================
+   PAINEL ESQUERDO (FORMULÁRIO)
+=================================*/
+.left-panel {
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(to bottom, #a1887f, #8d6e63);
+  border-top-left-radius: 25px;
+  border-bottom-left-radius: 25px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  z-index: 2;
+  transition: transform 0.6s ease-in-out, background-color 0.6s ease-in-out;
+}
+
+.login-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  width: 80%;
   padding: 30px;
-  border-radius: 15px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.2);
-  width: 350px;
-  text-align: center;
+  border-radius: 20px;
 }
 
-h2 {
-  color: #d81b60;
+.login-box h2 {
+  font-weight: 800;
+  font-size: 2.5rem;
+  color: #fdf6e3;
+  margin-bottom: 1rem;
 }
 
-input {
-  width: 90%;
-  padding: 10px;
-  margin: 10px 0;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-}
-
-button {
-  width: 95%;
-  padding: 10px;
-  background-color: #d81b60;
+/* ================================
+   INPUTS
+=================================*/
+.input-field,
+input,
+select {
+  width: 100%;
+  height: 7vh;
+  padding: 12px 20px;
+  border-radius: 20px;
   border: none;
-  color: white;
-  border-radius: 8px;
+  outline: none;
+  font-size: 0.95rem;
+  background-color: #efebe9;
+  color: #5d4037;
+  box-shadow: 0 2px 8px rgba(78, 52, 46, 0.1);
+  transition: 0.2s ease-in-out;
+}
+
+input::placeholder {
+  color: #8d6e63;
+}
+
+.input-field:focus,
+input:focus,
+.input-field:hover,
+input:hover {
+  box-shadow: 0 0 8px rgba(78, 52, 46, 0.4);
+}
+
+/* ================================
+   BOTÃO
+=================================*/
+.btn-entrar-login {
+  background-color: transparent;
+  border: 3px solid #292111;
+  padding: 12px 30px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #fdf6e3;
+  margin-top: 2vh;
+  border-radius: 25px;
   cursor: pointer;
-  font-weight: bold;
+  transition: 0.3s ease-in-out;
+  width: 100%;
 }
 
-button:hover {
-  background-color: #c2185b;
+.btn-entrar-login:hover {
+  background-color: #292111;
+  color: white;
+  box-shadow: 0 8px 20px rgba(255, 239, 200, 0.7);
 }
 
-#mensagem {
-  margin-top: 15px;
+/* ================================
+   MENSAGEM DE ERRO
+=================================*/
+.msg {
+  display: flex;
+  justify-content: center;
+  width: 80%;
+  color: #b71c1c;
+  font-weight: 600;
+}
+
+/* ================================
+   PAINEL DIREITO (IMAGEM)
+=================================*/
+.image-box {
+  flex: 1;
+  overflow: hidden;
+}
+
+.image-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-top-right-radius: 25px;
+  border-bottom-right-radius: 25px;
 }

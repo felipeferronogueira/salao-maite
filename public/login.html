@@ -10,15 +10,17 @@
 
 <body>
 
-    <div class="container">
-        <h2>Login</h2>
-        <form id="loginForm">
-            <input type="email" id="email" placeholder="Email" required>
-            <input type="password" id="senha" placeholder="Senha" required>
-            <button type="submit">Entrar</button>
-        </form>
-        <p id="mensagem"></p>
-    </div>
+    <main class="container-background">
+        <div class="left-panel" id="leftPanel">
+            <div class="login-box" id="loginBox">
+                <h2>Login</h2>
+                <input type="email" id="email" placeholder="Email" class="input-field">
+                <input type="password" id="senha" placeholder="Senha" class="input-field">
+                <button class="btn-entrar-login" onclick="entrar()">Entrar</button>
+                <div class="msg" id="msg"></div>
+            </div>
+        </div>
+    </main>
 
 </body>
 
@@ -26,11 +28,10 @@
 
 <script>
 
-    const form = document.getElementById('loginForm');
-    const mensagem = document.getElementById('mensagem');
+    
+    const mensagem = document.getElementById('msg');
 
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
+    async function entrar(){
 
         const email = document.getElementById('email').value;
         const senha = document.getElementById('senha').value;
@@ -46,7 +47,7 @@
 
             if (response.ok) {
                 mensagem.innerText = 'Login realizado com sucesso!';
-                mensagem.style.color = 'green';
+                mensagem.style.color = 'white';
                 // Redireciona para a página principal (dashboard)
                 setTimeout(() => {
                     window.location.href = './dashboard/dashAlerta.html'; // Ou dashboard.html futuramente
@@ -60,7 +61,7 @@
             mensagem.style.color = 'red';
             console.error(error);
         }
-    });
+    };
 
 
 </script>
