@@ -31,7 +31,6 @@ router.post('/login', async (req, res) => {
 // 🔔 Rota para gerar alertas
 router.get('/alertas', async (req, res) => {
   try {
-    // Puxa todos os atendimentos, ordenados por data (mais recente primeiro)
     const { data: atendimentos, error: errorAtend } = await supabase
       .from('atendimento')
       .select(`
@@ -43,62 +42,107 @@ router.get('/alertas', async (req, res) => {
 
     if (errorAtend) throw errorAtend;
 
-    // Objeto para guardar o último atendimento de cada cliente
-    const ultimosAtendimentos = {};
-
-    atendimentos.forEach(atendimento => {
-      const clienteId = atendimento.fk_cliente;
-      if (!ultimosAtendimentos[clienteId]) {
-        ultimosAtendimentos[clienteId] = atendimento;
-      }
-    });
-
     const hoje = new Date();
     const alertas = [];
 
-    for (const clienteId in ultimosAtendimentos) {
-      const atendimento = ultimosAtendimentos[clienteId];
+    // Função para formatar data corretamente
+    function formatarDataUTC(dataString) {
+      const data = new Date(dataString);
+      return `${data.getUTCDate().toString().padStart(2, '0')}/${(data.getUTCMonth() + 1).toString().padStart(2, '0')}/${data.getUTCFullYear()}`;
+    }
+
+    // Função para calcular diferença em meses e dias
+    function diferencaMesesDias(data) {
+      const hojeDate = new Date(hoje);
+      const dataRef = new Date(data);
+
+      let anos = hojeDate.getFullYear() - dataRef.getFullYear();
+      let meses = hojeDate.getMonth() - dataRef.getMonth();
+      let dias = hojeDate.getDate() - dataRef.getDate();
+
+      if (dias < 0) {
+        meses--;
+        const ultimoDiaMesAnterior = new Date(hojeDate.getFullYear(), hojeDate.getMonth(), 0).getDate();
+        dias += ultimoDiaMesAnterior;
+      }
+
+      if (meses < 0) {
+        anos--;
+        meses += 12;
+      }
+
+      meses += anos * 12;
+
+      return { meses, dias };
+    }
+
+    for (const atendimento of atendimentos) {
       const dataAtendimento = new Date(atendimento.data);
       const cliente = atendimento.cliente;
       const servicoId = atendimento.fk_servico;
       const servicoNome = atendimento.servico.nome;
 
-      const diffDias = Math.floor((hoje - dataAtendimento) / (1000 * 60 * 60 * 24));
+      const diffDias = Math.floor(
+        (hoje.getTime() - dataAtendimento.getTime()) / (1000 * 60 * 60 * 24)
+      );
 
-      // 🔹 Alerta de satisfação (1 semana após)
-      if (diffDias === 7) {
+      const { meses, dias } = diferencaMesesDias(atendimento.data);
+
+      const textoTempo = `(${meses} meses e ${dias} dias atrás)`;
+
+      // ✅ Satisfação (7 a 13 dias)
+      if (diffDias >= 7 && diffDias <= 13) {
         alertas.push({
           tipo: 'Satisfação',
-          mensagem: `📞 Perguntar para ${cliente.nome} (tel: ${cliente.telefone}) se ela está gostando do serviço ${servicoNome}, realizado em ${dataAtendimento.toLocaleDateString()}.`
+          mensagem: `📞 Perguntar para ${cliente.nome} (tel: ${cliente.telefone}) se ela está gostando do serviço ${servicoNome}, realizado em ${formatarDataUTC(atendimento.data)} ${textoTempo}.`
         });
       }
 
-      // 🔸 Alertas específicos por serviço
+      // ⚙️ Outros alertas
       if (servicoId === 3) {
-        // Reflexo
-        const diasParaTonalizar = 60 - 14; // 2 meses menos 2 semanas
-        if (diffDias === diasParaTonalizar) {
+        // Reflexo -> Tonalização (60 dias), alerta 7 dias antes e até 7 dias depois
+        const prazo = 60;
+        const alertaComeca = prazo - 7;
+        const alertaTermina = prazo + 7;
+
+        if (diffDias >= alertaComeca && diffDias <= alertaTermina) {
+          const passou = diffDias > prazo ? `O prazo venceu há ${diffDias - prazo} dias.` : `Faltam ${prazo - diffDias} dias para o prazo.`;
+
           alertas.push({
             tipo: 'Tonalização',
-            mensagem: `🎨 Oferecer para ${cliente.nome} (tel: ${cliente.telefone}) uma tonalização, pois o reflexo foi feito em ${dataAtendimento.toLocaleDateString()}.`
+            mensagem: `🎨 Oferecer para ${cliente.nome} (tel: ${cliente.telefone}) uma tonalização, pois o reflexo foi feito em ${formatarDataUTC(atendimento.data)} ${textoTempo}. ${passou}`
           });
         }
-      } else if (servicoId === 4) {
-        // Tonalização
-        const diasParaReflexo = 120 - 14; // 4 meses menos 2 semanas
-        if (diffDias === diasParaReflexo) {
+      }
+
+      if (servicoId === 4) {
+        // Tonalização -> Reflexo (120 dias), alerta 7 dias antes e até 7 dias depois
+        const prazo = 120;
+        const alertaComeca = prazo - 7;
+        const alertaTermina = prazo + 7;
+
+        if (diffDias >= alertaComeca && diffDias <= alertaTermina) {
+          const passou = diffDias > prazo ? `O prazo venceu há ${diffDias - prazo} dias.` : `Faltam ${prazo - diffDias} dias para o prazo.`;
+
           alertas.push({
             tipo: 'Reflexo',
-            mensagem: `🔄 Sugerir para ${cliente.nome} (tel: ${cliente.telefone}) voltar para fazer reflexo, pois a tonalização foi feita em ${dataAtendimento.toLocaleDateString()}.`
+            mensagem: `🔄 Sugerir para ${cliente.nome} (tel: ${cliente.telefone}) fazer reflexo, pois o último tonalizar/tratar foi em ${formatarDataUTC(atendimento.data)} ${textoTempo}. ${passou}`
           });
         }
-      } else if (servicoId === 1) {
-        // Corte
-        const diasParaNovoCorte = 90 - 14; // 3 meses menos 2 semanas
-        if (diffDias === diasParaNovoCorte) {
+      }
+
+      if (servicoId === 1) {
+        // Corte -> Novo Corte (90 dias), alerta 7 dias antes e até 7 dias depois
+        const prazo = 90;
+        const alertaComeca = prazo - 7;
+        const alertaTermina = prazo + 7;
+
+        if (diffDias >= alertaComeca && diffDias <= alertaTermina) {
+          const passou = diffDias > prazo ? `O prazo venceu há ${diffDias - prazo} dias.` : `Faltam ${prazo - diffDias} dias para o prazo.`;
+
           alertas.push({
             tipo: 'Novo Corte',
-            mensagem: `💇‍♀️ Sugerir para ${cliente.nome} (tel: ${cliente.telefone}) voltar para um novo corte. O último foi em ${dataAtendimento.toLocaleDateString()}.`
+            mensagem: `💇‍♀️ Sugerir para ${cliente.nome} (tel: ${cliente.telefone}) fazer novo corte, pois o último corte foi em ${formatarDataUTC(atendimento.data)} ${textoTempo}. ${passou}`
           });
         }
       }

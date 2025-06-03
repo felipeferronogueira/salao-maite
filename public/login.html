@@ -11,14 +11,18 @@
 <body>
 
     <main class="container-background">
-        <div class="left-panel" id="leftPanel">
-            <div class="login-box" id="loginBox">
+        <div class="left-panel">
+            <div class="login-box">
                 <h2>Login</h2>
                 <input type="email" id="email" placeholder="Email" class="input-field">
                 <input type="password" id="senha" placeholder="Senha" class="input-field">
                 <button class="btn-entrar-login" onclick="entrar()">Entrar</button>
                 <div class="msg" id="msg"></div>
             </div>
+        </div>
+
+        <div class="right-panel">
+            <img src="./assets/imgs/image.png" alt="Painel direito com imagem">
         </div>
     </main>
 
@@ -28,10 +32,10 @@
 
 <script>
 
-    
+
     const mensagem = document.getElementById('msg');
 
-    async function entrar(){
+    async function entrar() {
 
         const email = document.getElementById('email').value;
         const senha = document.getElementById('senha').value;
@@ -50,7 +54,7 @@
                 mensagem.style.color = 'white';
                 // Redireciona para a página principal (dashboard)
                 setTimeout(() => {
-                    window.location.href = './dashboard/dashAlerta.html'; // Ou dashboard.html futuramente
+                    window.location.href = './dashboard/alertas.html'; // Ou dashboard.html futuramente
                 }, 1500);
             } else {
                 mensagem.innerText = data.error;

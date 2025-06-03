@@ -15,13 +15,12 @@
 }
 
 body {
-  background: linear-gradient(135deg, #79635a, #f5f5dc);
-  font-family: 'Epilogue';
+  background: linear-gradient(135deg, #79635a, #f5f5dc); /* Fundo degradê */
+  font-family: 'Epilogue'; /* Usa a fonte Epilogue */
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
-  margin: 0;
+  height: 100vh; /* Altura total da tela */
 }
 
 /* ================================
@@ -30,25 +29,10 @@ body {
 .container-background {
   width: 70vw;
   height: 75vh;
-  margin: 12vh auto 0 auto;
-  background: linear-gradient(to right, #fdf6e3, #e0cfc2);
   border-radius: 25px;
   box-shadow: 0 0 20px rgba(78, 52, 46, 0.2);
   display: flex;
-  align-items: stretch;
-  position: relative;
   overflow: hidden;
-  transition: 0.6s ease-in-out;
-  margin-top: 0vh;
-}
-
-.container-background::before {
-  content: "";
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: rgba(250, 245, 235, 0.2);
-  pointer-events: none;
 }
 
 /* ================================
@@ -57,16 +41,13 @@ body {
 .left-panel {
   width: 50%;
   height: 100%;
-  background: linear-gradient(to bottom, #a1887f, #8d6e63);
+  background: linear-gradient(to bottom, #a1887f, #8d6e63); /* Degradê marrom */
   border-top-left-radius: 25px;
   border-bottom-left-radius: 25px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  position: absolute;
-  z-index: 2;
-  transition: transform 0.6s ease-in-out, background-color 0.6s ease-in-out;
 }
 
 .login-box {
@@ -153,15 +134,16 @@ input:hover {
 /* ================================
    PAINEL DIREITO (IMAGEM)
 =================================*/
-.image-box {
-  flex: 1;
+.right-panel {
+  width: 50%;
+  height: 100%;
+  border-top-right-radius: 25px;
+  border-bottom-right-radius: 25px;
   overflow: hidden;
 }
 
-.image-box img {
+.right-panel img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-top-right-radius: 25px;
-  border-bottom-right-radius: 25px;
 }
