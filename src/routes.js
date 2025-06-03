@@ -1,9 +1,10 @@
 const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
+const { DateTime } = require('luxon'); // ⬅️ Importando luxon
 
 const router = express.Router();
 
-// Configure o Supabase
+// 🔗 Configuração do Supabase
 const supabaseUrl = 'https://ddaospzzqescbvloatyg.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkYW9zcHp6cWVzY2J2bG9hdHlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2OTcxNzMsImV4cCI6MjA2NDI3MzE3M30.WnDEqtTtdNqHcupMvjYipdaDotizg9WEHbMQGwJIYqQ';
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -28,10 +29,23 @@ router.post('/login', async (req, res) => {
   res.status(200).json({ message: 'Login realizado com sucesso', data });
 });
 
-// 🔔 Rota para gerar alertas
+
+
+// Função para calcular a diferença em meses e dias
+function diferencaMesesDias(dataString, hojeBrasilia) {
+  const data = DateTime.fromISO(dataString, { zone: 'utc' }).setZone('America/Sao_Paulo');
+  const diff = hojeBrasilia.diff(data, ['months', 'days']).toObject();
+
+  return {
+    meses: Math.floor(diff.months),
+    dias: Math.floor(diff.days),
+  };
+}
+
+// Rota principal
 router.get('/alertas', async (req, res) => {
   try {
-    const { data: atendimentos, error: errorAtend } = await supabase
+    const { data: atendimentos, error } = await supabase
       .from('atendimento')
       .select(`
         *,
@@ -40,109 +54,83 @@ router.get('/alertas', async (req, res) => {
       `)
       .order('data', { ascending: false });
 
-    if (errorAtend) throw errorAtend;
+    if (error) throw error;
 
-    const hoje = new Date();
+    const hojeBrasilia = DateTime.now().setZone('America/Sao_Paulo');
     const alertas = [];
 
-    // Função para formatar data corretamente
-    function formatarDataUTC(dataString) {
-      const data = new Date(dataString);
-      return `${data.getUTCDate().toString().padStart(2, '0')}/${(data.getUTCMonth() + 1).toString().padStart(2, '0')}/${data.getUTCFullYear()}`;
-    }
-
-    // Função para calcular diferença em meses e dias
-    function diferencaMesesDias(data) {
-      const hojeDate = new Date(hoje);
-      const dataRef = new Date(data);
-
-      let anos = hojeDate.getFullYear() - dataRef.getFullYear();
-      let meses = hojeDate.getMonth() - dataRef.getMonth();
-      let dias = hojeDate.getDate() - dataRef.getDate();
-
-      if (dias < 0) {
-        meses--;
-        const ultimoDiaMesAnterior = new Date(hojeDate.getFullYear(), hojeDate.getMonth(), 0).getDate();
-        dias += ultimoDiaMesAnterior;
-      }
-
-      if (meses < 0) {
-        anos--;
-        meses += 12;
-      }
-
-      meses += anos * 12;
-
-      return { meses, dias };
-    }
-
     for (const atendimento of atendimentos) {
-      const dataAtendimento = new Date(atendimento.data);
+      console.log(`Data bruta do atendimento (ID: ${atendimento.id}):`, atendimento.data);
+
+      const dataAtendimento = DateTime.fromISO(atendimento.data, { zone: 'utc' }).setZone('America/Sao_Paulo');
+      console.log(`Data ajustada para Brasília:`, dataAtendimento.toISO());
+
       const cliente = atendimento.cliente;
       const servicoId = atendimento.fk_servico;
       const servicoNome = atendimento.servico.nome;
 
-      const diffDias = Math.floor(
-        (hoje.getTime() - dataAtendimento.getTime()) / (1000 * 60 * 60 * 24)
-      );
-
-      const { meses, dias } = diferencaMesesDias(atendimento.data);
-
+      const diffDias = Math.floor(hojeBrasilia.diff(dataAtendimento, 'days').days);
+      const { meses, dias } = diferencaMesesDias(atendimento.data, hojeBrasilia);
       const textoTempo = `(${meses} meses e ${dias} dias atrás)`;
 
-      // ✅ Satisfação (7 a 13 dias)
+      // Alerta de Satisfação
       if (diffDias >= 7 && diffDias <= 13) {
         alertas.push({
           tipo: 'Satisfação',
-          mensagem: `📞 Perguntar para ${cliente.nome} (tel: ${cliente.telefone}) se ela está gostando do serviço ${servicoNome}, realizado em ${formatarDataUTC(atendimento.data)} ${textoTempo}.`
+          mensagem: `📞 Perguntar para ${cliente.nome} (tel: ${cliente.telefone}) se ela está gostando do serviço ${servicoNome}, realizado em ${atendimento.data} ${textoTempo}.`
         });
       }
 
-      // ⚙️ Outros alertas
+      // Tonalização (serviço 3)
       if (servicoId === 3) {
-        // Reflexo -> Tonalização (60 dias), alerta 7 dias antes e até 7 dias depois
         const prazo = 60;
-        const alertaComeca = prazo - 7;
-        const alertaTermina = prazo + 7;
+        const inicio = prazo - 7;
+        const fim = prazo + 7;
 
-        if (diffDias >= alertaComeca && diffDias <= alertaTermina) {
-          const passou = diffDias > prazo ? `O prazo venceu há ${diffDias - prazo} dias.` : `Faltam ${prazo - diffDias} dias para o prazo.`;
+        if (diffDias >= inicio && diffDias <= fim) {
+          const passou = diffDias > prazo
+            ? `O prazo venceu há ${diffDias - prazo} dias.`
+            : `Faltam ${prazo - diffDias} dias para o prazo.`;
 
           alertas.push({
             tipo: 'Tonalização',
-            mensagem: `🎨 Oferecer para ${cliente.nome} (tel: ${cliente.telefone}) uma tonalização, pois o reflexo foi feito em ${formatarDataUTC(atendimento.data)} ${textoTempo}. ${passou}`
+            mensagem: `🎨 Oferecer para ${cliente.nome} (tel: ${cliente.telefone}) uma tonalização, pois o reflexo foi feito em ${atendimento.data} ${textoTempo}. ${passou}`
           });
         }
       }
 
+      // Reflexo (serviço 4)
       if (servicoId === 4) {
-        // Tonalização -> Reflexo (120 dias), alerta 7 dias antes e até 7 dias depois
         const prazo = 120;
-        const alertaComeca = prazo - 7;
-        const alertaTermina = prazo + 7;
+        const inicio = prazo - 7;
+        const fim = prazo + 7;
 
-        if (diffDias >= alertaComeca && diffDias <= alertaTermina) {
-          const passou = diffDias > prazo ? `O prazo venceu há ${diffDias - prazo} dias.` : `Faltam ${prazo - diffDias} dias para o prazo.`;
+        if (diffDias >= inicio && diffDias <= fim) {
+          const passou = diffDias > prazo
+            ? `O prazo venceu há ${diffDias - prazo} dias.`
+            : `Faltam ${prazo - diffDias} dias para o prazo.`;
 
           alertas.push({
             tipo: 'Reflexo',
-            mensagem: `🔄 Sugerir para ${cliente.nome} (tel: ${cliente.telefone}) fazer reflexo, pois o último tonalizar/tratar foi em ${formatarDataUTC(atendimento.data)} ${textoTempo}. ${passou}`
+            mensagem: `🔄 Sugerir para ${cliente.nome} (tel: ${cliente.telefone}) fazer reflexo, pois o último tonalizar/tratar foi em ${atendimento.data} ${textoTempo}. ${passou}`
           });
         }
       }
 
+      // Corte (serviço 1)
       if (servicoId === 1) {
-        // Corte -> Novo Corte (90 dias), alerta 7 dias antes e até 7 dias depois
         const prazo = 90;
-        const alertaComeca = prazo - 7;
-        const alertaTermina = prazo + 7;
+        const inicio = prazo - 7;
+        const fim = prazo + 7;
 
-        if (diffDias >= alertaComeca && diffDias <= alertaTermina) {
-          const passou = diffDias > prazo ? `O prazo venceu há ${diffDias - prazo} dias.` : `Faltam ${prazo - diffDias} dias para o prazo.`;
+        if (diffDias >= inicio && diffDias <= fim) {
+          const passou = diffDias > prazo
+            ? `O prazo venceu há ${diffDias - prazo} dias.`
+            : `Faltam ${prazo - diffDias} dias para o prazo.`;
 
           alertas.push({
             tipo: 'Novo Corte',
-            mensagem: `💇‍♀️ Sugerir para ${cliente.nome} (tel: ${cliente.telefone}) fazer novo corte, pois o último corte foi em ${formatarDataUTC(atendimento.data)} ${textoTempo}. ${passou}`
+            mensagem: `💇‍♀️ Sugerir para ${cliente.nome} (tel: ${cliente.telefone}) fazer novo corte, pois o último corte foi em ${atendimento.data} ${textoTempo}. ${passou}`
           });
         }
       }
@@ -150,11 +138,10 @@ router.get('/alertas', async (req, res) => {
 
     res.status(200).json({ alertas });
 
-  } catch (error) {
-    console.error('Erro ao gerar alertas:', error);
+  } catch (err) {
+    console.error('Erro ao gerar alertas:', err);
     res.status(500).json({ error: 'Erro ao gerar alertas' });
   }
 });
-
 
 module.exports = router;
