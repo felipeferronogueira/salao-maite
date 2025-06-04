@@ -1,12 +1,12 @@
 const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
-const { DateTime } = require('luxon'); // ⬅️ Importando luxon
+const { DateTime } = require('luxon');
 
 const router = express.Router();
 
-// 🔗 Configuração do Supabase
-const supabaseUrl = 'https://ddaospzzqescbvloatyg.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkYW9zcHp6cWVzY2J2bG9hdHlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2OTcxNzMsImV4cCI6MjA2NDI3MzE3M30.WnDEqtTtdNqHcupMvjYipdaDotizg9WEHbMQGwJIYqQ';
+// Configuração do Supabase com variáveis de ambiente (recomenda-se usar .env)
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY; 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // 🔐 Rota de login
@@ -29,12 +29,31 @@ router.post('/login', async (req, res) => {
   res.status(200).json({ message: 'Login realizado com sucesso', data });
 });
 
+// Rota para cadastrar novo cliente
+router.post('/cadastro', async (req, res) => {
+  const { nome, telefone } = req.body;
+
+  if (!nome || !telefone) {
+    return res.status(400).json({ error: 'Nome e telefone são obrigatórios' });
+  }
+
+  const { data, error } = await supabase
+    .from('cliente')
+    .insert([{ nome, telefone }]);
+
+  if (error) {
+    return res.status(500).json({ error: 'Erro ao inserir no banco de dados' });
+  }
+
+  res.status(201).json({ message: 'Cliente cadastrado com sucesso', data });
+});
 
 
-// Função para calcular a diferença em meses e dias
-function diferencaMesesDias(dataString, hojeBrasilia) {
+// 📅 Função para calcular meses e dias entre hoje e a data
+function diferencaMesesDias(dataString) {
+  const hoje = DateTime.now().setZone('America/Sao_Paulo');
   const data = DateTime.fromISO(dataString, { zone: 'utc' }).setZone('America/Sao_Paulo');
-  const diff = hojeBrasilia.diff(data, ['months', 'days']).toObject();
+  const diff = hoje.diff(data, ['months', 'days']).toObject();
 
   return {
     meses: Math.floor(diff.months),
@@ -42,7 +61,28 @@ function diferencaMesesDias(dataString, hojeBrasilia) {
   };
 }
 
-// Rota principal
+// 🔁 Função para gerar alerta com base no tipo e prazo
+function gerarAlerta(tipo, atendimento, cliente, servicoNome, diffDias, servicoAlvo, prazo, emoji) {
+  const inicio = prazo - 7;
+  const fim = prazo + 7;
+
+  if (atendimento.fk_servico === servicoAlvo && diffDias >= inicio && diffDias <= fim) {
+    const passou = diffDias > prazo
+      ? `O prazo venceu há ${diffDias - prazo} dias.`
+      : `Faltam ${prazo - diffDias} dias para o prazo.`;
+
+    const { meses, dias } = diferencaMesesDias(atendimento.data);
+
+    return {
+      tipo,
+      mensagem: `${emoji} Sugerir para ${cliente.nome} (tel: ${cliente.telefone}) fazer ${tipo.toLowerCase()}, pois o último foi em ${atendimento.data} (${meses} meses e ${dias} dias atrás). ${passou}`
+    };
+  }
+
+  return null;
+}
+
+// 📣 Rota principal para alertas
 router.get('/alertas', async (req, res) => {
   try {
     const { data: atendimentos, error } = await supabase
@@ -56,21 +96,16 @@ router.get('/alertas', async (req, res) => {
 
     if (error) throw error;
 
-    const hojeBrasilia = DateTime.now().setZone('America/Sao_Paulo');
+    const hoje = DateTime.now().setZone('America/Sao_Paulo');
     const alertas = [];
 
     for (const atendimento of atendimentos) {
-      console.log(`Data bruta do atendimento (ID: ${atendimento.id}):`, atendimento.data);
-
       const dataAtendimento = DateTime.fromISO(atendimento.data, { zone: 'utc' }).setZone('America/Sao_Paulo');
-      console.log(`Data ajustada para Brasília:`, dataAtendimento.toISO());
+      const diffDias = Math.floor(hoje.diff(dataAtendimento, 'days').days);
 
-      const cliente = atendimento.cliente;
-      const servicoId = atendimento.fk_servico;
-      const servicoNome = atendimento.servico.nome;
-
-      const diffDias = Math.floor(hojeBrasilia.diff(dataAtendimento, 'days').days);
-      const { meses, dias } = diferencaMesesDias(atendimento.data, hojeBrasilia);
+      const { cliente, servico, fk_servico: servicoId } = atendimento;
+      const servicoNome = servico.nome;
+      const { meses, dias } = diferencaMesesDias(atendimento.data);
       const textoTempo = `(${meses} meses e ${dias} dias atrás)`;
 
       // Alerta de Satisfação
@@ -82,58 +117,16 @@ router.get('/alertas', async (req, res) => {
       }
 
       // Tonalização (serviço 3)
-      if (servicoId === 3) {
-        const prazo = 60;
-        const inicio = prazo - 7;
-        const fim = prazo + 7;
-
-        if (diffDias >= inicio && diffDias <= fim) {
-          const passou = diffDias > prazo
-            ? `O prazo venceu há ${diffDias - prazo} dias.`
-            : `Faltam ${prazo - diffDias} dias para o prazo.`;
-
-          alertas.push({
-            tipo: 'Tonalização',
-            mensagem: `🎨 Oferecer para ${cliente.nome} (tel: ${cliente.telefone}) uma tonalização, pois o reflexo foi feito em ${atendimento.data} ${textoTempo}. ${passou}`
-          });
-        }
-      }
+      const tonalizacao = gerarAlerta('Tonalização', atendimento, cliente, servicoNome, diffDias, 3, 60, '🎨');
+      if (tonalizacao) alertas.push(tonalizacao);
 
       // Reflexo (serviço 4)
-      if (servicoId === 4) {
-        const prazo = 120;
-        const inicio = prazo - 7;
-        const fim = prazo + 7;
-
-        if (diffDias >= inicio && diffDias <= fim) {
-          const passou = diffDias > prazo
-            ? `O prazo venceu há ${diffDias - prazo} dias.`
-            : `Faltam ${prazo - diffDias} dias para o prazo.`;
-
-          alertas.push({
-            tipo: 'Reflexo',
-            mensagem: `🔄 Sugerir para ${cliente.nome} (tel: ${cliente.telefone}) fazer reflexo, pois o último tonalizar/tratar foi em ${atendimento.data} ${textoTempo}. ${passou}`
-          });
-        }
-      }
+      const reflexo = gerarAlerta('Reflexo', atendimento, cliente, servicoNome, diffDias, 4, 120, '🔄');
+      if (reflexo) alertas.push(reflexo);
 
       // Corte (serviço 1)
-      if (servicoId === 1) {
-        const prazo = 90;
-        const inicio = prazo - 7;
-        const fim = prazo + 7;
-
-        if (diffDias >= inicio && diffDias <= fim) {
-          const passou = diffDias > prazo
-            ? `O prazo venceu há ${diffDias - prazo} dias.`
-            : `Faltam ${prazo - diffDias} dias para o prazo.`;
-
-          alertas.push({
-            tipo: 'Novo Corte',
-            mensagem: `💇‍♀️ Sugerir para ${cliente.nome} (tel: ${cliente.telefone}) fazer novo corte, pois o último corte foi em ${atendimento.data} ${textoTempo}. ${passou}`
-          });
-        }
-      }
+      const corte = gerarAlerta('Novo Corte', atendimento, cliente, servicoNome, diffDias, 1, 90, '💇‍♀️');
+      if (corte) alertas.push(corte);
     }
 
     res.status(200).json({ alertas });
@@ -141,6 +134,42 @@ router.get('/alertas', async (req, res) => {
   } catch (err) {
     console.error('Erro ao gerar alertas:', err);
     res.status(500).json({ error: 'Erro ao gerar alertas' });
+  }
+});
+
+router.get('/clientes', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('cliente')
+      .select('id, nome');
+
+    if (error) throw error;
+
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao buscar clientes' });
+  }
+});
+
+router.post('/atendimento', async (req, res) => {
+  const { cliente_id, servico, preco, data, marca, quantidade, cor } = req.body;
+
+  try {
+    const { error } = await supabase.from('atendimento').insert({
+      fk_cliente: cliente_id,
+      fk_servico: servico,
+      preco,
+      data,
+      marca: marca || null,
+      quantidade_uso: quantidade || null,
+      numero_cor: cor || null,
+    });
+
+    if (error) throw error;
+
+    res.status(201).json({ message: 'Atendimento cadastrado' });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao cadastrar atendimento' });
   }
 });
 

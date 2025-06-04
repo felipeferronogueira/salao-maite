@@ -19,6 +19,7 @@
   "homepage": "https://github.com/felipeferronogueira/salao-maite#readme",
   "dependencies": {
     "@supabase/supabase-js": "^2.49.9",
+    "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "luxon": "^3.6.1"
   }

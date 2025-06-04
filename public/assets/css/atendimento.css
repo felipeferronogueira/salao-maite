@@ -1,6 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,100..900&display=swap');
 
-/* Reset básico */
 * {
     margin: 0;
     padding: 0;
@@ -14,7 +13,6 @@ body {
     height: 100vh;
 }
 
-/* Sidebar no lado direito */
 .sidebar {
     width: 250px;
     background: linear-gradient(to bottom, #d2b48c, #8b5e3c);
@@ -25,7 +23,6 @@ body {
     padding: 30px 20px;
 }
 
-/* Foto do usuário */
 .profile img {
     width: 150px;
     height: 150px;
@@ -35,13 +32,12 @@ body {
     box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
 
-.profile h2{
+.profile h2 {
     margin-top: 10px;
     text-align: center;
     color: white;
 }
 
-/* Menu */
 .menu {
     display: flex;
     flex-direction: column;
@@ -66,7 +62,6 @@ body {
     transform: scale(1.05);
 }
 
-/* Botão de sair */
 .logout button {
     padding: 12px;
     width: 8.5vw;
@@ -86,26 +81,82 @@ body {
 }
 
 .main-content {
-    flex: 1;
-    padding: 40px;
+    display: flex;
+    padding: 30px;
+    width: 100%;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
     overflow-y: auto;
-    max-height: 100vh;
+    max-height: 120vh;
 }
 
-.alerta {
-    border: 2px solid #f5a623;
-    background-color: #fff7e6;
-    padding: 15px;
-    margin: 10px 0;
-    border-radius: 8px;
-}
 
-.alerta h3 {
-    margin: 0 0 5px;
-    color: #f5a623;
-}
-
-.alerta p {
-    margin: 0;
+.main-content h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
     color: #333;
+}
+
+form {
+    background-color: white;
+    padding: 30px 40px;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+    width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+form label {
+    font-weight: 600;
+    color: #5a3d2b;
+}
+
+form input,
+form select {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.3s;
+}
+
+form input:focus,
+form select:focus {
+    border-color: #8b5e3c;
+}
+
+form button[type="submit"] {
+    background-color: #8b5e3c;
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+form button[type="submit"]:hover {
+    background-color: #a56f4a;
+    transform: scale(1.03);
+}
+
+.main-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    gap: 20px;
+}
+
+#inputs-coloracao,
+#campos-basicos {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }

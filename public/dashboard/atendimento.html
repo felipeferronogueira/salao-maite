@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="../assets/css/atendimento.css">
+</head>
+
+<body>
+
+    <div class="sidebar">
+        <div class="profile">
+            <img src="../assets/imgs/maite.png" alt="Foto do Usuário">
+            <h2>Olá, Maitê!</h2>
+        </div>
+
+        <div class="menu">
+            <a href="alertas.html"><button>Alertas</button></a>
+            <a href="cadastro.html"><button>Cadastrar</button></a>
+            <a href="atendimento.html"><button>Atendimento</button></a>
+        </div>
+
+        <div class="logout">
+            <a href="../login.html"><button>Sair</button></a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <h1 id="titulo">Cadastrar Atendimento</h1>
+
+        <form id="form-atendimento">
+            <label for="cliente">Cliente:</label>
+            <select id="cliente" name="cliente" required></select>
+
+            <label for="servico">Serviço:</label>
+            <select id="servico" name="servico" required>
+                <option value="">Selecione</option>
+                <option value="4">Tonalizar</option>
+                <option value="3">Reflexo</option>
+                <option value="1">Corte</option>
+                <option value="2">Coloração</option>
+            </select>
+
+            <div id="campos-basicos" style="display: none;">
+                <label for="preco">Preço:</label>
+                <input type="number" id="preco" name="preco">
+
+                <label for="data">Data:</label>
+                <input type="date" id="data" name="data">
+            </div>
+
+            <div id="inputs-coloracao" style="display: none;">
+                <label for="marca">Marca:</label>
+                <input type="text" id="marca" name="marca">
+
+                <label for="quantidade">Quantidade de uso:</label>
+                <input type="text" id="quantidade" name="quantidade">
+
+                <label for="cor">Número da cor:</label>
+                <input type="text" id="cor" name="cor">
+            </div>
+
+            <button type="submit">Cadastrar</button>
+        </form>
+    </div>
+
+</body>
+
+<script>
+    async function carregarClientes() {
+        try {
+            const response = await fetch('/api/clientes');
+            const data = await response.json();
+
+            const select = document.getElementById('cliente');
+            data.forEach(cliente => {
+                const option = document.createElement('option');
+                option.value = cliente.id;
+                option.textContent = cliente.nome;
+                select.appendChild(option);
+            });
+        } catch (err) {
+            console.error('Erro ao carregar clientes:', err);
+        }
+    }
+
+    document.getElementById('servico').addEventListener('change', () => {
+        const servico = document.getElementById('servico').value;
+        const coloracao = document.getElementById('inputs-coloracao');
+        const basicos = document.getElementById('campos-basicos');
+
+        if (servico === "") {
+            basicos.style.display = "none";
+            coloracao.style.display = "none";
+        } else if (servico === '2') {
+            basicos.style.display = "flex";
+            coloracao.style.display = "flex";
+            titulo.style.marginTop = '80px';
+        } else {
+            basicos.style.display = "flex";
+            coloracao.style.display = "none";
+        }
+    });
+
+    document.getElementById('form-atendimento').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const servico = document.getElementById('servico').value;
+
+        const formData = {
+            cliente_id: document.getElementById('cliente').value,
+            servico: servico,
+            preco: document.getElementById('preco').value,
+            data: document.getElementById('data').value,
+        };
+
+        if (servico === '2') {
+            formData.marca = document.getElementById('marca').value;
+            formData.quantidade = document.getElementById('quantidade').value;
+            formData.cor = document.getElementById('cor').value;
+        }
+
+        try {
+            const response = await fetch('/api/atendimento', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData),
+            });
+
+            if (response.ok) {
+                alert('Atendimento cadastrado com sucesso!');
+                document.getElementById('form-atendimento').reset();
+                document.getElementById('inputs-coloracao').style.display = 'none';
+                document.getElementById('campos-basicos').style.display = 'none';
+            } else {
+                const err = await response.json();
+                alert(`Erro: ${err.error}`);
+            }
+        } catch (err) {
+            console.error('Erro no envio:', err);
+        }
+    });
+
+    carregarClientes();
+</script>
+
+</html>

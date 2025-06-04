@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="../assets/css/cadastro.css">
+</head>
+
+<body onload="">
+
+    <div class="sidebar">
+        <div class="profile">
+            <img src="../assets/imgs/maite.png" alt="Foto do Usuário">
+            <h2>Olá, Maitê!</h2>
+        </div>
+
+        <div class="menu">
+            <a href="alertas.html">
+                <button>Alertas</button>
+            </a>
+            <a href="cadastro.html">
+                <button>Cadastrar</button>
+            </a>
+            <a href="atendimento.html">
+                <button>Atendimento</button>
+            </a>
+        </div>
+
+        <div class="logout">
+            <a href="../login.html">
+                <button>Sair</button>
+            </a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <h1>Cadastrar Cliente</h1>
+        <form id="formCadastro">
+            <label for="nome">Nome:</label><br>
+            <input type="text" id="nome" name="nome" required><br><br>
+
+            <label for="telefone">Telefone:</label><br>
+            <input type="text" id="telefone" name="telefone" required><br><br>
+
+            <button type="submit">Cadastrar</button>
+        </form>
+
+        <p id="mensagem"></p>
+    </div>
+
+</body>
+
+</html>
+
+<script>
+    document.getElementById('formCadastro').addEventListener('submit', async function (event) {
+        event.preventDefault();
+
+        const nome = document.getElementById('nome').value;
+        const telefone = document.getElementById('telefone').value;
+
+        const resposta = await fetch('/api/cadastro', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ nome, telefone })
+        });
+
+        const resultado = await resposta.json();
+        const msg = document.getElementById('mensagem');
+
+        if (resposta.ok) {
+            msg.style.color = 'green';
+            msg.textContent = 'Cliente cadastrado com sucesso!';
+            document.getElementById('formCadastro').reset();
+        } else {
+            msg.style.color = 'red';
+            msg.textContent = 'Erro ao cadastrar cliente: ' + resultado.error;
+        }
+    });
+</script>

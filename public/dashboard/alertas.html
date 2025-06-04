@@ -15,24 +15,26 @@
         </div>
         
         <div class="menu">
-          <a href="alertas.html">
-            <button>Alertas</button>
-          </a>
-          <a href="">
-            <button>Botão 1</button>
-          </a>
-          <a href="">
-            <button>Botão 1</button>
-          </a>
+            <a href="alertas.html">
+                <button>Alertas</button>
+            </a>
+            <a href="cadastro.html">
+                <button>Cadastrar</button>
+            </a>
+            <a href="atendimento.html">
+                <button>Atendimento</button>
+            </a>
         </div>
 
         <div class="logout">
-            <button>Sair</button>
+            <a href="../login.html">
+                <button>Sair</button>
+            </a>
         </div>
     </div>
 
     <div class="main-content">
-        <h1>Conteúdo Principal</h1>
+       
     </div>
 
 </body>
@@ -45,7 +47,7 @@ async function carregarAlertas() {
   const data = await response.json();
 
   const container = document.querySelector('.main-content');
-  container.innerHTML = '<h1>Alertas</h1>';
+  container.innerHTML = '<h1>Alertas de Mensagem para os Clientes</h1><br>';
 
   if (data.alertas.length === 0) {
     container.innerHTML += '<p>✅ Nenhum alerta no momento.</p>';
