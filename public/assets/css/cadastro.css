@@ -108,11 +108,11 @@ form#formCadastro {
   display: flex;
   flex-direction: column;
   background-color: #fff;
-  padding: 40px;
+  padding: 30px;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   width: 25vw;
-  height: 50vh;
+  height: auto;
 }
 
 /* Rótulos */
@@ -127,7 +127,7 @@ form#formCadastro label {
 form#formCadastro input {
   width: 100%;
   padding: 10px;
-  margin-bottom: 15px;
+  margin-bottom: 0px;
   border-radius: 8px;
   border: 1px solid #ccc;
   font-size: 14px;
@@ -137,17 +137,18 @@ form#formCadastro input {
 form#formCadastro button {
   background-color: #8b5e3c;
   color: white;
-  padding: 10px;
-  border: none;
+  padding: 12px;
+  border: 2px solid #8b5e3c;
   border-radius: 10px;
   font-weight: bold;
   cursor: pointer;
   transition: background-color 0.3s, transform 0.2s;
-  height: 5vh;
 }
 
 form#formCadastro button:hover {
-  background-color: #5a28c3;
+  background-color: transparent;
+  border: 2px solid #8b5e3c;
+  color: #8b5e3c;
 }
 
 /* Mensagem */

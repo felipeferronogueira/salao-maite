@@ -83,27 +83,27 @@ body {
 .main-content {
     display: flex;
     padding: 30px;
+    gap: 35px;
     width: 100%;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     overflow-y: auto;
-    max-height: 120vh;
+    max-height: 100vh;
 }
 
-
 .main-content h1 {
-    font-size: 24px;
+    font-size: 30px;
     margin-bottom: 20px;
     color: #333;
 }
 
 form {
     background-color: white;
-    padding: 30px 40px;
+    padding: 40px;
     border-radius: 15px;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
-    width: 400px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0);
+    width: 25vw;
     display: flex;
     flex-direction: column;
     gap: 15px;
@@ -119,9 +119,11 @@ form select {
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 8px;
+    background-color: transparent;
     outline: none;
     width: 100%;
     transition: border-color 0.3s;
+    margin-bottom: 10px;
 }
 
 form input:focus,
@@ -133,7 +135,7 @@ form button[type="submit"] {
     background-color: #8b5e3c;
     color: white;
     padding: 12px;
-    border: none;
+    border: 2px solid #8b5e3c;
     border-radius: 10px;
     font-weight: bold;
     cursor: pointer;
@@ -141,17 +143,9 @@ form button[type="submit"] {
 }
 
 form button[type="submit"]:hover {
-    background-color: #a56f4a;
-    transform: scale(1.03);
-}
-
-.main-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    gap: 20px;
+    background-color: transparent;
+    border: 2px solid #8b5e3c;
+    color: #8b5e3c;
 }
 
 #inputs-coloracao,
