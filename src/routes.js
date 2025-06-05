@@ -173,4 +173,39 @@ router.post('/atendimento', async (req, res) => {
   }
 });
 
+router.get('/historico/:clienteId', async (req, res) => {
+  const { clienteId } = req.params;
+
+  try {
+    const { data, error } = await supabase
+      .from('atendimento')
+      .select(`
+        id, data, preco, marca, quantidade_uso, numero_cor, 
+        cliente (nome, telefone), 
+        servico (id, nome)
+      `)
+      .eq('fk_cliente', clienteId)
+      .order('data', { ascending: false });
+
+    if (error) throw error;
+
+    const historico = data.map(item => ({
+      servico: item.servico.nome,
+      servico_id: item.servico.id,
+      cliente: item.cliente.nome,
+      telefone: item.cliente.telefone,
+      data: item.data,
+      preco: item.preco,
+      marca: item.marca || null,
+      quantidade: item.quantidade_uso || null,
+      numero_cor: item.numero_cor || null
+    }));
+
+    res.status(200).json(historico);
+  } catch (err) {
+    console.error('Erro ao buscar histórico:', err);
+    res.status(500).json({ error: 'Erro ao buscar histórico' });
+  }
+});
+
 module.exports = router;

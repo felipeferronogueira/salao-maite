@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="../assets/css/historico.css">
+</head>
+
+<body>
+
+    <div class="sidebar">
+        <div class="profile">
+            <img src="../assets/imgs/maite.png" alt="Foto do Usuário">
+            <h3>Olá, Maitê!</h2>
+        </div>
+
+        <div class="menu">
+            <a href="alertas.html">
+                <button>Alertas</button>
+            </a>
+            <a href="cadastro.html">
+                <button>Cadastrar</button>
+            </a>
+            <a href="atendimento.html">
+                <button>Atendimento</button>
+            </a>
+            <a href="historico.html">
+                <button>Histórico</button>
+            </a>
+        </div>
+
+        <div class="logout">
+            <a href="../login.html">
+                <button>Sair</button>
+            </a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <label for="cliente">Cliente:</label>
+        <select id="clienteselect" name="cliente" required onchange="carregarHistorico()"></select>
+    
+        <div class="historico-container" id="historico"></div>
+    </div>
+    
+</body>
+
+</html>
+
+<script>
+    async function carregarClientes() {
+        try {
+            const response = await fetch('/api/clientes');
+            const data = await response.json();
+
+            const select = document.getElementById('clienteselect');
+            select.innerHTML = '<option value="">Selecione um cliente</option>';
+
+            data.forEach(cliente => {
+                const option = document.createElement('option');
+                option.value = cliente.id;
+                option.textContent = cliente.nome;
+                select.appendChild(option);
+            });
+        } catch (err) {
+            console.error('Erro ao carregar clientes:', err);
+        }
+    }
+
+    async function carregarHistorico() {
+        const clienteId = document.getElementById('clienteselect').value;
+        const historicoDiv = document.getElementById('historico');
+        historicoDiv.innerHTML = '';
+
+        if (!clienteId) return;
+
+        try {
+            const response = await fetch(`/api/historico/${clienteId}`);
+            const data = await response.json();
+
+            if (data.length === 0) {
+                historicoDiv.innerHTML = '<p>Este cliente não possui atendimentos cadastrados.</p>';
+                return;
+            }
+
+            data.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'card-atendimento';
+
+                let html = `
+                    <h3>Serviço: ${item.servico}</h3>
+                    <p><strong>Cliente:</strong> ${item.cliente}</p>
+                    <p><strong>Telefone:</strong> ${item.telefone}</p>
+                    <p><strong>Data:</strong> ${item.data}</p>
+                `;
+
+                if (item.servico_id == 2) {
+                    html += `
+                        <p><strong>Preço:</strong> R$ ${item.preco}</p>
+                        <p><strong>Marca:</strong> ${item.marca}</p>
+                        <p><strong>Quantidade de uso:</strong> ${item.quantidade}</p>
+                        <p><strong>Número da cor:</strong> ${item.numero_cor}</p>
+                    `;
+                } else {
+                    html += `<p><strong>Preço:</strong> R$ ${item.preco}</p>`;
+                }
+
+                card.innerHTML = html;
+                historicoDiv.appendChild(card);
+            });
+
+        } catch (err) {
+            console.error('Erro ao carregar histórico:', err);
+            historicoDiv.innerHTML = '<p>Erro ao carregar histórico.</p>';
+        }
+    }
+
+    carregarClientes();
+</script>
