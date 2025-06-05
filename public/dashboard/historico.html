@@ -39,8 +39,17 @@
     </div>
 
     <div class="main-content">
-        <label for="cliente">Cliente:</label>
-        <select id="clienteselect" name="cliente" required onchange="carregarHistorico()"></select>
+        
+        <div class="filters">
+            <div class="select_cliente">
+                <label for="cliente">Cliente:</label>
+                <select id="clienteselect" name="cliente" required onchange="carregarHistorico()"></select>
+            </div>
+
+            <div class="top-bar">
+                <button onclick="exportarAtendimentos()">Exportar Atendimentos</button>
+            </div>
+        </div>
     
         <div class="historico-container" id="historico"></div>
     </div>
@@ -50,6 +59,10 @@
 </html>
 
 <script>
+    function exportarAtendimentos() {
+        window.location.href = '/api/exportar-atendimentos';
+    }
+
     async function carregarClientes() {
         try {
             const response = await fetch('/api/clientes');

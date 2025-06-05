@@ -141,3 +141,35 @@ body {
     margin: 4px 0;
     color: #333;
 }
+
+.filters{
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-between;
+}
+
+.select_cliente{
+    display: flex;
+    flex-direction: column;
+}
+
+.top-bar {
+    display: flex;
+    align-self: center;
+}
+
+.top-bar button {
+    background-color: #8b5e3c;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    height: 6vh;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.top-bar button:hover {
+    background-color: #a56e47;
+}

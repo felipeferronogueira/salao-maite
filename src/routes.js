@@ -208,4 +208,56 @@ router.get('/historico/:clienteId', async (req, res) => {
   }
 });
 
+const { Parser } = require('json2csv');
+
+router.get('/exportar-atendimentos', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('atendimento')
+      .select(`
+        data, preco, marca, quantidade_uso, numero_cor,
+        cliente (nome, telefone),
+        servico (nome)
+      `);
+
+    if (error) throw error;
+
+    const atendimentos = data.map(item => ({
+      data: item.data,
+      nome_cliente: item.cliente?.nome || '',
+      telefone_cliente: item.cliente?.telefone || '',
+      servico: item.servico?.nome || '',
+      preco: item.preco,
+      marca: item.marca || '',
+      quantidade_uso: item.quantidade_uso || '',
+      numero_cor: item.numero_cor || ''
+    }));
+
+    const fields = [
+      'data',
+      'nome_cliente',
+      'telefone_cliente',
+      'servico',
+      'preco',
+      'marca',
+      'quantidade_uso',
+      'numero_cor'
+    ];
+
+    const json2csv = new Parser({ fields });
+    const csv = json2csv.parse(atendimentos);
+
+    // Adiciona o BOM para Excel reconhecer UTF-8 corretamente
+    const bom = '\uFEFF';
+
+    res.header('Content-Type', 'text/csv; charset=utf-8');
+    res.attachment('atendimentos.csv');
+    return res.send(bom + csv);
+  } catch (err) {
+    console.error('Erro ao exportar atendimentos:', err);
+    res.status(500).json({ error: 'Erro ao exportar atendimentos' });
+  }
+});
+
+
 module.exports = router;
