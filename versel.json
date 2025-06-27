@@ -1,5 +1,5 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/login.html" }
+    { "source": "/", "destination": "/public//login.html" }
   ]
 }
