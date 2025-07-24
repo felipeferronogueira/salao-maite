@@ -6,7 +6,7 @@ const router = express.Router();
 
 // Configuração do Supabase com variáveis de ambiente (recomenda-se usar .env)
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY; 
+const supabaseKey = process.env.SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // 🔐 Rota de login
@@ -127,7 +127,26 @@ router.get('/alertas', async (req, res) => {
       // Corte (serviço 1)
       const corte = gerarAlerta('Novo Corte', atendimento, cliente, servicoNome, diffDias, 1, 90, '💇‍♀️');
       if (corte) alertas.push(corte);
+
+      // 💡 Coloração com prazo personalizado (serviço 2)
+      if (servicoId === 2 && atendimento.prazo_retorno) {
+        const prazo = parseInt(atendimento.prazo_retorno);
+        const inicio = prazo - 7;
+        const fim = prazo + 7;
+
+        if (diffDias >= inicio && diffDias <= fim) {
+          const passou = diffDias > prazo
+            ? `O prazo venceu há ${diffDias - prazo} dias.`
+            : `Faltam ${prazo - diffDias} dias para o prazo.`;
+
+          alertas.push({
+            tipo: 'Coloração',
+            mensagem: `🌈 Sugerir para ${cliente.nome} (tel: ${cliente.telefone}) fazer uma nova coloração. A última foi em ${atendimento.data} ${textoTempo}. ${passou}`
+          });
+        }
+      }
     }
+
 
     res.status(200).json({ alertas });
 
@@ -152,7 +171,7 @@ router.get('/clientes', async (req, res) => {
 });
 
 router.post('/atendimento', async (req, res) => {
-  const { cliente_id, servico, preco, data, marca, quantidade, cor } = req.body;
+  const { cliente_id, servico, preco, data, marca, quantidade, cor, prazo } = req.body;
 
   try {
     const { error } = await supabase.from('atendimento').insert({
@@ -163,6 +182,7 @@ router.post('/atendimento', async (req, res) => {
       marca: marca || null,
       quantidade_uso: quantidade || null,
       numero_cor: cor || null,
+      prazo_retorno: prazo || null
     });
 
     if (error) throw error;
@@ -180,7 +200,7 @@ router.get('/historico/:clienteId', async (req, res) => {
     const { data, error } = await supabase
       .from('atendimento')
       .select(`
-        id, data, preco, marca, quantidade_uso, numero_cor, 
+        id, data, preco, marca, quantidade_uso, numero_cor, prazo_retorno,
         cliente (nome, telefone), 
         servico (id, nome)
       `)
@@ -198,7 +218,8 @@ router.get('/historico/:clienteId', async (req, res) => {
       preco: item.preco,
       marca: item.marca || null,
       quantidade: item.quantidade_uso || null,
-      numero_cor: item.numero_cor || null
+      numero_cor: item.numero_cor || null,
+      prazo_retorno: item.prazo_retorno || null
     }));
 
     res.status(200).json(historico);

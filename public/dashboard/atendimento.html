@@ -69,10 +69,15 @@
 
                 <label for="cor">Número da cor:</label>
                 <input type="text" id="cor" name="cor">
+
+                <label for="prazo">Prazo de retorno (em dias):</label>
+                <input type="number" id="prazo" name="prazo" min="1" required>
             </div>
 
             <button type="submit">Cadastrar</button>
         </form>
+
+        <p id="mensagem"></p>
     </div>
 
 </body>
@@ -117,6 +122,7 @@
         e.preventDefault();
 
         const servico = document.getElementById('servico').value;
+        const msg = document.getElementById('mensagem');
 
         const formData = {
             cliente_id: document.getElementById('cliente').value,
@@ -129,6 +135,7 @@
             formData.marca = document.getElementById('marca').value;
             formData.quantidade = document.getElementById('quantidade').value;
             formData.cor = document.getElementById('cor').value;
+            formData.prazo = document.getElementById('prazo').value; 
         }
 
         try {
@@ -139,13 +146,15 @@
             });
 
             if (response.ok) {
-                alert('Atendimento cadastrado com sucesso!');
+                msg.style.color = 'green';
+                msg.textContent = 'Cliente cadastrado com sucesso!';
                 document.getElementById('form-atendimento').reset();
                 document.getElementById('inputs-coloracao').style.display = 'none';
                 document.getElementById('campos-basicos').style.display = 'none';
             } else {
                 const err = await response.json();
-                alert(`Erro: ${err.error}`);
+                msg.style.color = 'red';
+                msg.textContent = 'Erro ao cadastrar cliente: ' + err.error;
             }
         } catch (err) {
             console.error('Erro no envio:', err);
