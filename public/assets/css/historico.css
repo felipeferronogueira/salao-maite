@@ -154,6 +154,17 @@ body {
     flex-direction: column;
 }
 
+.top{
+    display: flex;
+    flex-direction: column;
+}
+
+.top input{
+    padding: 7px;
+    border-radius: 5px;
+    border: 1px solid gray;
+}
+
 .top-bar {
     display: flex;
     align-self: center;
@@ -165,7 +176,8 @@ body {
     border: none;
     padding: 10px 18px;
     border-radius: 8px;
-    height: 6vh;
+    margin-top: -5px;
+    height: 5vh;
     cursor: pointer;
     transition: background-color 0.3s ease;
 }

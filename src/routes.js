@@ -31,15 +31,15 @@ router.post('/login', async (req, res) => {
 
 // Rota para cadastrar novo cliente
 router.post('/cadastro', async (req, res) => {
-  const { nome, telefone } = req.body;
+  const { nome, telefone, obs } = req.body;
 
-  if (!nome || !telefone) {
+  if (!nome || !telefone || !obs) {
     return res.status(400).json({ error: 'Nome e telefone são obrigatórios' });
   }
 
   const { data, error } = await supabase
     .from('cliente')
-    .insert([{ nome, telefone }]);
+    .insert([{ nome, telefone, obs }]);
 
   if (error) {
     return res.status(500).json({ error: 'Erro ao inserir no banco de dados' });
@@ -88,11 +88,11 @@ router.get('/alertas', async (req, res) => {
     const { data: atendimentos, error } = await supabase
       .from('atendimento')
       .select(`
-        *,
-        cliente (id, nome, telefone),
-        servico (id, nome)
-      `)
-      .order('data', { ascending: false });
+    *,
+    cliente (id, nome, telefone),
+    servico (id, nome)
+  `)
+      .eq('status', false);
 
     if (error) throw error;
 
@@ -109,50 +109,98 @@ router.get('/alertas', async (req, res) => {
       const textoTempo = `(${meses} meses e ${dias} dias atrás)`;
 
       // Alerta de Satisfação
-      if (diffDias >= 7 && diffDias <= 13) {
+      if (diffDias >= 7) {
         alertas.push({
           tipo: 'Satisfação',
-          mensagem: `📞 Perguntar para ${cliente.nome} (tel: ${cliente.telefone}) se ela está gostando do serviço ${servicoNome}, realizado em ${atendimento.data} ${textoTempo}.`
+          mensagem: `📞 Perguntar para ${cliente.nome} (tel: ${cliente.telefone}) se ela está gostando do serviço ${servicoNome}, realizado em ${atendimento.data} ${textoTempo}.`,
+          atendimento_id: atendimento.id
         });
       }
 
-      // Tonalização (serviço 3)
-      const tonalizacao = gerarAlerta('Tonalização', atendimento, cliente, servicoNome, diffDias, 3, 60, '🎨');
-      if (tonalizacao) alertas.push(tonalizacao);
+      // Tonalização (serviço 3) - prazo: 60 dias
+      const tonalizacaoPrazo = 60;
+      if (servicoId === 3 && diffDias >= tonalizacaoPrazo - 7) {
+        const passou = diffDias > tonalizacaoPrazo
+          ? `O prazo venceu há ${diffDias - tonalizacaoPrazo} dias.`
+          : `Faltam ${tonalizacaoPrazo - diffDias} dias para o prazo.`;
 
-      // Reflexo (serviço 4)
-      const reflexo = gerarAlerta('Reflexo', atendimento, cliente, servicoNome, diffDias, 4, 120, '🔄');
-      if (reflexo) alertas.push(reflexo);
+        alertas.push({
+          tipo: 'Tonalização',
+          mensagem: `🎨 Sugerir para ${cliente.nome} (tel: ${cliente.telefone}) fazer uma nova tonalização. A última foi em ${atendimento.data} ${textoTempo}. ${passou}`,
+          atendimento_id: atendimento.id
+        });
+      }
 
-      // Corte (serviço 1)
-      const corte = gerarAlerta('Novo Corte', atendimento, cliente, servicoNome, diffDias, 1, 90, '💇‍♀️');
-      if (corte) alertas.push(corte);
+      // Reflexo (serviço 4) - prazo: 120 dias
+      const reflexoPrazo = 120;
+      if (servicoId === 4 && diffDias >= reflexoPrazo - 7) {
+        const passou = diffDias > reflexoPrazo
+          ? `O prazo venceu há ${diffDias - reflexoPrazo} dias.`
+          : `Faltam ${reflexoPrazo - diffDias} dias para o prazo.`;
 
-      // 💡 Coloração com prazo personalizado (serviço 2)
+        alertas.push({
+          tipo: 'Reflexo',
+          mensagem: `🔄 Sugerir para ${cliente.nome} (tel: ${cliente.telefone}) fazer novo reflexo. A última vez foi em ${atendimento.data} ${textoTempo}. ${passou}`,
+          atendimento_id: atendimento.id
+        });
+      }
+
+      // Corte (serviço 1) - prazo: 90 dias
+      const cortePrazo = 90;
+      if (servicoId === 1 && diffDias >= cortePrazo - 7) {
+        const passou = diffDias > cortePrazo
+          ? `O prazo venceu há ${diffDias - cortePrazo} dias.`
+          : `Faltam ${cortePrazo - diffDias} dias para o prazo.`;
+
+        alertas.push({
+          tipo: 'Novo Corte',
+          mensagem: `💇‍♀️ Sugerir para ${cliente.nome} (tel: ${cliente.telefone}) fazer novo corte. O último foi em ${atendimento.data} ${textoTempo}. ${passou}`,
+          atendimento_id: atendimento.id
+        });
+      }
+
+      // Coloração (serviço 2) com prazo personalizado
       if (servicoId === 2 && atendimento.prazo_retorno) {
         const prazo = parseInt(atendimento.prazo_retorno);
         const inicio = prazo - 7;
-        const fim = prazo + 7;
 
-        if (diffDias >= inicio && diffDias <= fim) {
+        if (diffDias >= inicio) {
           const passou = diffDias > prazo
             ? `O prazo venceu há ${diffDias - prazo} dias.`
             : `Faltam ${prazo - diffDias} dias para o prazo.`;
 
           alertas.push({
             tipo: 'Coloração',
-            mensagem: `🌈 Sugerir para ${cliente.nome} (tel: ${cliente.telefone}) fazer uma nova coloração. A última foi em ${atendimento.data} ${textoTempo}. ${passou}`
+            mensagem: `🌈 Sugerir para ${cliente.nome} (tel: ${cliente.telefone}) fazer uma nova coloração. A última foi em ${atendimento.data} ${textoTempo}. ${passou}`,
+            atendimento_id: atendimento.id
           });
         }
       }
     }
-
-
+    
     res.status(200).json({ alertas });
 
   } catch (err) {
     console.error('Erro ao gerar alertas:', err);
     res.status(500).json({ error: 'Erro ao gerar alertas' });
+  }
+});
+
+router.put('/alertas/resolver/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const { error } = await supabase
+      .from('atendimento')
+      .update({ status: true })
+      .eq('id', id);
+
+    if (error) throw error;
+
+    res.status(200).json({ message: 'Alerta resolvido com sucesso.' });
+  } catch (err) {
+    console.error('Erro ao atualizar status:', err);
+    res.status(500).json({ error: 'Erro ao resolver alerta' });
   }
 });
 
@@ -201,7 +249,7 @@ router.get('/historico/:clienteId', async (req, res) => {
       .from('atendimento')
       .select(`
         id, data, preco, marca, quantidade_uso, numero_cor, prazo_retorno,
-        cliente (nome, telefone), 
+        cliente (nome, telefone, obs), 
         servico (id, nome)
       `)
       .eq('fk_cliente', clienteId)
@@ -214,6 +262,7 @@ router.get('/historico/:clienteId', async (req, res) => {
       servico_id: item.servico.id,
       cliente: item.cliente.nome,
       telefone: item.cliente.telefone,
+      obs: item.cliente.obs,
       data: item.data,
       preco: item.preco,
       marca: item.marca || null,
@@ -229,51 +278,64 @@ router.get('/historico/:clienteId', async (req, res) => {
   }
 });
 
-const { Parser } = require('json2csv');
+const ExcelJS = require('exceljs');
 
 router.get('/exportar-atendimentos', async (req, res) => {
   try {
+    const { inicio, fim } = req.query;
+
+    if (!inicio || !fim) {
+      return res.status(400).json({ error: 'Datas de início e fim são obrigatórias.' });
+    }
+
     const { data, error } = await supabase
       .from('atendimento')
       .select(`
         data, preco, marca, quantidade_uso, numero_cor,
-        cliente (nome, telefone),
+        cliente (nome, telefone, obs),
         servico (nome)
-      `);
+      `)
+      .gte('data', inicio)
+      .lte('data', fim);
 
     if (error) throw error;
 
-    const atendimentos = data.map(item => ({
-      data: item.data,
-      nome_cliente: item.cliente?.nome || '',
-      telefone_cliente: item.cliente?.telefone || '',
-      servico: item.servico?.nome || '',
-      preco: item.preco,
-      marca: item.marca || '',
-      quantidade_uso: item.quantidade_uso || '',
-      numero_cor: item.numero_cor || ''
-    }));
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Atendimentos');
 
-    const fields = [
-      'data',
-      'nome_cliente',
-      'telefone_cliente',
-      'servico',
-      'preco',
-      'marca',
-      'quantidade_uso',
-      'numero_cor'
+    // Cabeçalhos com OBS após PREÇO
+    worksheet.columns = [
+      { header: 'Data', key: 'data', width: 20 },
+      { header: 'Cliente', key: 'nome_cliente', width: 25 },
+      { header: 'Telefone', key: 'telefone_cliente', width: 18 },
+      { header: 'Serviço', key: 'servico', width: 20 },
+      { header: 'Preço', key: 'preco', width: 10 },
+      { header: 'Observação', key: 'obs', width: 30 },
+      { header: 'Marca', key: 'marca', width: 20 },
+      { header: 'Qtd. Uso', key: 'quantidade_uso', width: 12 },
+      { header: 'Nº Cor', key: 'numero_cor', width: 10 }
     ];
 
-    const json2csv = new Parser({ fields });
-    const csv = json2csv.parse(atendimentos);
+    // Dados
+    data.forEach(item => {
+      worksheet.addRow({
+        data: item.data,
+        nome_cliente: item.cliente?.nome || '',
+        telefone_cliente: item.cliente?.telefone || '',
+        servico: item.servico?.nome || '',
+        preco: item.preco,
+        obs: item.cliente?.obs || '',
+        marca: item.marca || '',
+        quantidade_uso: item.quantidade_uso || '',
+        numero_cor: item.numero_cor || ''
+      });
+    });
 
-    // Adiciona o BOM para Excel reconhecer UTF-8 corretamente
-    const bom = '\uFEFF';
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=atendimentos.xlsx');
 
-    res.header('Content-Type', 'text/csv; charset=utf-8');
-    res.attachment('atendimentos.csv');
-    return res.send(bom + csv);
+    await workbook.xlsx.write(res);
+    res.end();
   } catch (err) {
     console.error('Erro ao exportar atendimentos:', err);
     res.status(500).json({ error: 'Erro ao exportar atendimentos' });

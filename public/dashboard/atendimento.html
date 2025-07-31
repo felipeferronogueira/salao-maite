@@ -50,6 +50,9 @@
                 <option value="3">Reflexo</option>
                 <option value="1">Corte</option>
                 <option value="2">Coloração</option>
+                <option value="5">Escova</option>
+                <option value="6">Progressiva</option>
+                <option value="7">Tratamento/Hidratação</option>
             </select>
 
             <div id="campos-basicos" style="display: none;">
@@ -111,10 +114,12 @@
         } else if (servico === '2') {
             basicos.style.display = "flex";
             coloracao.style.display = "flex";
+            document.getElementById('prazo').setAttribute('required', true);
             titulo.style.marginTop = '80px';
         } else {
             basicos.style.display = "flex";
             coloracao.style.display = "none";
+            document.getElementById('prazo').removeAttribute('required');
         }
     });
 
@@ -135,7 +140,7 @@
             formData.marca = document.getElementById('marca').value;
             formData.quantidade = document.getElementById('quantidade').value;
             formData.cor = document.getElementById('cor').value;
-            formData.prazo = document.getElementById('prazo').value; 
+            formData.prazo = document.getElementById('prazo').value;
         }
 
         try {

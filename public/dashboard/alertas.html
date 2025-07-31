@@ -1,71 +1,87 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
-    <link rel="stylesheet" href="../assets/css/alerta.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="../assets/css/alerta.css">
 </head>
 <body onload="carregarAlertas()">
 
-    <div class="sidebar">
-        <div class="profile">
-            <img src="../assets/imgs/maite.png" alt="Foto do Usuário">
-            <h3>Olá, Maitê!</h2>
-        </div>
-        
-        <div class="menu">
-            <a href="alertas.html">
-                <button>Alertas</button>
-            </a>
-            <a href="cadastro.html">
-                <button>Cadastrar</button>
-            </a>
-            <a href="atendimento.html">
-                <button>Atendimento</button>
-            </a>
-            <a href="historico.html">
-                <button>Histórico</button>
-            </a>
-        </div>
-
-        <div class="logout">
-            <a href="../login.html">
-                <button>Sair</button>
-            </a>
-        </div>
+  <div class="sidebar">
+    <div class="profile">
+      <img src="../assets/imgs/maite.png" alt="Foto do Usuário">
+      <h3>Olá, Maitê!</h3>
     </div>
 
-    <div class="main-content">
-       
+    <div class="menu">
+      <a href="alertas.html">
+        <button>Alertas</button>
+      </a>
+      <a href="cadastro.html">
+        <button>Cadastrar</button>
+      </a>
+      <a href="atendimento.html">
+        <button>Atendimento</button>
+      </a>
+      <a href="historico.html">
+        <button>Histórico</button>
+      </a>
     </div>
 
+    <div class="logout">
+      <a href="../login.html">
+        <button>Sair</button>
+      </a>
+    </div>
+  </div>
+
+  <div class="main-content"></div>
+
+  <script>
+    async function carregarAlertas() {
+      const response = await fetch('/api/alertas');
+      const data = await response.json();
+
+      const container = document.querySelector('.main-content');
+      container.innerHTML = '<h1>Alertas de Mensagem para os Clientes</h1><br>';
+
+      if (data.alertas.length === 0) {
+        container.innerHTML += '<p>✅ Nenhum alerta no momento.</p>';
+        return;
+      }
+
+      data.alertas.forEach(alerta => {
+        const div = document.createElement('div');
+        div.classList.add('alerta');
+
+        div.innerHTML = `
+          <h3>${alerta.tipo}</h3>
+          <p>${alerta.mensagem}</p>
+          <label>
+            <input type="checkbox" onchange="confirmarAlerta('${alerta.atendimento_id}', this)">
+            Marcar como resolvido
+          </label>
+        `;
+
+        container.appendChild(div);
+      });
+    }
+
+    async function confirmarAlerta(idAtendimento, checkbox) {
+      if (checkbox.checked) {
+        const resposta = await fetch(`/api/alertas/resolver/${idAtendimento}`, {
+          method: 'PUT'
+        });
+
+        if (resposta.ok) {
+          checkbox.closest('.alerta').remove();
+        } else {
+          alert('Erro ao marcar alerta como resolvido.');
+          checkbox.checked = false;
+        }
+      }
+    }
+  </script>
 </body>
 </html>
-
-<script>
-
-async function carregarAlertas() {
-  const response = await fetch('/api/alertas');
-  const data = await response.json();
-
-  const container = document.querySelector('.main-content');
-  container.innerHTML = '<h1>Alertas de Mensagem para os Clientes</h1><br>';
-
-  if (data.alertas.length === 0) {
-    container.innerHTML += '<p>✅ Nenhum alerta no momento.</p>';
-    return;
-  }
-
-  data.alertas.forEach(alerta => {
-    const div = document.createElement('div');
-    div.classList.add('alerta');
-    div.innerHTML = `
-      <h3>${alerta.tipo}</h3>
-      <p>${alerta.mensagem}</p>
-    `;
-    container.appendChild(div);
-  });
-}
-
-</script>

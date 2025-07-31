@@ -46,6 +46,9 @@
 
             <label for="telefone">Telefone:</label><br>
             <input type="text" id="telefone" name="telefone" required><br><br>
+            
+            <label for="obs">Observação:</label><br>
+            <input type="text" id="obs" name="obs" required><br><br>
 
             <button type="submit">Cadastrar</button>
         </form>
@@ -63,13 +66,14 @@
 
         const nome = document.getElementById('nome').value;
         const telefone = document.getElementById('telefone').value;
+        const obs = document.getElementById('obs').value;
 
         const resposta = await fetch('/api/cadastro', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ nome, telefone })
+            body: JSON.stringify({ nome, telefone, obs })
         });
 
         const resultado = await resposta.json();
