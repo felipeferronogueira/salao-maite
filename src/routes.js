@@ -29,14 +29,30 @@ router.post('/login', async (req, res) => {
   res.status(200).json({ message: 'Login realizado com sucesso', data });
 });
 
-// Rota para cadastrar novo cliente
 router.post('/cadastro', async (req, res) => {
   const { nome, telefone, obs } = req.body;
 
   if (!nome || !telefone || !obs) {
-    return res.status(400).json({ error: 'Nome e telefone são obrigatórios' });
+    return res.status(400).json({ error: 'Nome, telefone e observação são obrigatórios' });
   }
 
+  // 🔍 Verifica se já existe uma cliente com o mesmo nome
+  const { data: clienteExistente, error: erroBusca } = await supabase
+    .from('cliente')
+    .select('*')
+    .eq('nome', nome)
+    .single(); // espera no máximo um resultado
+
+  if (erroBusca && erroBusca.code !== 'PGRST116') {
+    // PGRST116 = no rows found, isso é ok
+    return res.status(500).json({ error: 'Erro ao buscar cliente existente' });
+  }
+
+  if (clienteExistente) {
+    return res.status(409).json({ error: 'Cliente já cadastrada com esse nome' });
+  }
+
+  // ✅ Cadastra novo cliente
   const { data, error } = await supabase
     .from('cliente')
     .insert([{ nome, telefone, obs }]);
@@ -45,7 +61,7 @@ router.post('/cadastro', async (req, res) => {
     return res.status(500).json({ error: 'Erro ao inserir no banco de dados' });
   }
 
-  res.status(201).json({ message: 'Cliente cadastrado com sucesso', data });
+  res.status(201).json({ message: 'Cliente cadastrada com sucesso', data });
 });
 
 

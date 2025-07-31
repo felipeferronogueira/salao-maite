@@ -46,7 +46,7 @@
 
             <label for="telefone">Telefone:</label><br>
             <input type="text" id="telefone" name="telefone" required><br><br>
-            
+
             <label for="obs">Observação:</label><br>
             <input type="text" id="obs" name="obs" required><br><br>
 
@@ -81,11 +81,15 @@
 
         if (resposta.ok) {
             msg.style.color = 'green';
-            msg.textContent = 'Cliente cadastrado com sucesso!';
+            msg.textContent = 'Cliente cadastrada com sucesso!';
             document.getElementById('formCadastro').reset();
+        } else if (resposta.status === 409) {
+            msg.style.color = 'red';
+            msg.textContent = 'Essa cliente já está cadastrada.';
         } else {
             msg.style.color = 'red';
             msg.textContent = 'Erro ao cadastrar cliente: ' + resultado.error;
         }
+
     });
 </script>
