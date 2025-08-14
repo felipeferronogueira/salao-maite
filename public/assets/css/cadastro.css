@@ -104,15 +104,28 @@ body {
   align-items: center;
 }
 
-/* Título */
+/* ===== CONTAINER PRINCIPAL ===== */
+.main-content {
+  display: flex; /* Colunas lado a lado */
+  gap: 80px; /* Espaço entre cadastro e edição */
+  padding: 30px;
+  font-family: 'Epilogue';
+  width: 100%;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center; /* Alinha no topo */
+}
+
+/* ===== TÍTULOS ===== */
 .main-content h1 {
   font-size: 24px;
   margin-bottom: 20px;
   color: #333;
+  text-align: center;
 }
 
-/* Estilo do formulário */
-form#formCadastro {
+/* ===== BLOCO DE CADASTRO ===== */
+.cadastro {
   display: flex;
   flex-direction: column;
   background-color: #fff;
@@ -123,26 +136,23 @@ form#formCadastro {
   height: auto;
 }
 
-/* Rótulos */
-form#formCadastro label {
+.cadastro label {
   display: block;
   margin-bottom: 6px;
   font-weight: bold;
   color: #444;
 }
 
-/* Inputs */
-form#formCadastro input {
+.cadastro input {
   width: 100%;
   padding: 10px;
-  margin-bottom: 0px;
+  margin-bottom: 15px;
   border-radius: 8px;
   border: 1px solid #ccc;
   font-size: 14px;
 }
 
-/* Botão */
-form#formCadastro button {
+.cadastro button {
   background-color: #8b5e3c;
   color: white;
   padding: 12px;
@@ -153,15 +163,66 @@ form#formCadastro button {
   transition: background-color 0.3s, transform 0.2s;
 }
 
-form#formCadastro button:hover {
+.cadastro button:hover {
   background-color: transparent;
   border: 2px solid #8b5e3c;
   color: #8b5e3c;
 }
 
-/* Mensagem */
 #mensagem {
   margin-top: 25px;
-  font-size: 20px;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+/* ===== BLOCO DE EDIÇÃO ===== */
+.editar {
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  width: 25vw;
+  height: auto;
+}
+
+.editar label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: bold;
+  color: #444;
+}
+
+.editar select,
+.editar input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+.editar button {
+  background-color: #8b5e3c;
+  color: white;
+  padding: 12px;
+  border: 2px solid #8b5e3c;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.editar button:hover {
+  background-color: transparent;
+  border: 2px solid #8b5e3c;
+  color: #8b5e3c;
+}
+
+#mensagemEdit {
+  margin-top: 25px;
+  font-size: 16px;
   font-weight: bold;
 }

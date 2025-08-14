@@ -39,21 +39,49 @@
     </div>
 
     <div class="main-content">
-        <h1>Cadastrar Cliente</h1>
-        <form id="formCadastro">
-            <label for="nome">Nome:</label><br>
-            <input type="text" id="nome" name="nome" required><br><br>
 
-            <label for="telefone">Telefone:</label><br>
-            <input type="text" id="telefone" name="telefone" required><br><br>
+        <!-- Coluna de Cadastro -->
+        <div class="cadastro">
+            <h1>Cadastrar Cliente</h1>
+            <form id="formCadastro">
+                <label for="nome">Nome:</label><br>
+                <input type="text" id="nome" name="nome" required><br><br>
 
-            <label for="obs">Observação:</label><br>
-            <input type="text" id="obs" name="obs" required><br><br>
+                <label for="telefone">Telefone:</label><br>
+                <input type="text" id="telefone" name="telefone" required><br><br>
 
-            <button type="submit">Cadastrar</button>
-        </form>
+                <label for="obs">Observação:</label><br>
+                <input type="text" id="obs" name="obs" required><br><br>
 
-        <p id="mensagem"></p>
+                <button type="submit">Cadastrar</button>
+            </form>
+
+            <p id="mensagem"></p>
+        </div>
+
+        <!-- Coluna de Edição -->
+        <div class="editar">
+            <h1>Editar Cliente</h1>
+
+            <div class="select_cliente">
+                <label for="clienteselect">Cliente:</label><br>
+                <select id="clienteselect" name="cliente" required></select>
+            </div><br>
+
+            <label for="edit_nome">Nome:</label><br>
+            <input type="text" id="edit_nome" name="edit_nome"><br><br>
+
+            <label for="edit_telefone">Telefone:</label><br>
+            <input type="text" id="edit_telefone" name="edit_telefone"><br><br>
+
+            <label for="edit_obs">Observação:</label><br>
+            <input type="text" id="edit_obs" name="edit_obs"><br><br>
+
+            <button onclick="atualizarCliente()">Salvar Alterações</button>
+
+            <p id="mensagemEdit"></p>
+        </div>
+
     </div>
 
 </body>
@@ -92,4 +120,72 @@
         }
 
     });
+
+    async function carregarClientes() {
+        try {
+            const response = await fetch('/api/clientes');
+            const data = await response.json();
+
+            const select = document.getElementById('clienteselect');
+            select.innerHTML = '<option value="">Selecione um cliente</option>';
+
+            data.forEach(cliente => {
+                const option = document.createElement('option');
+                option.value = cliente.id;
+                option.textContent = cliente.nome;
+                select.appendChild(option);
+            });
+        } catch (err) {
+            console.error('Erro ao carregar clientes:', err);
+        }
+    }
+
+    // Quando escolher cliente, preencher inputs
+    document.getElementById('clienteselect').addEventListener('change', async function () {
+        const id = this.value;
+        if (!id) return;
+
+        try {
+            const response = await fetch(`/api/cliente/${id}`);
+            const cliente = await response.json();
+
+            document.getElementById('edit_nome').value = cliente.nome;
+            document.getElementById('edit_telefone').value = cliente.telefone;
+            document.getElementById('edit_obs').value = cliente.obs;
+        } catch (err) {
+            console.error('Erro ao buscar cliente:', err);
+        }
+    });
+
+    // Atualizar cliente
+    async function atualizarCliente() {
+        const id = document.getElementById('clienteselect').value;
+        const nome = document.getElementById('edit_nome').value;
+        const telefone = document.getElementById('edit_telefone').value;
+        const obs = document.getElementById('edit_obs').value;
+
+        try {
+            const response = await fetch(`/api/cliente/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nome, telefone, obs })
+            });
+
+            const resultado = await response.json();
+            const msg = document.getElementById('mensagemEdit');
+
+            if (response.ok) {
+                msg.style.color = 'green';
+                msg.textContent = 'Cliente atualizado com sucesso!';
+                carregarClientes(); // atualizar lista
+            } else {
+                msg.style.color = 'red';
+                msg.textContent = 'Erro: ' + resultado.error;
+            }
+        } catch (err) {
+            console.error('Erro ao atualizar cliente:', err);
+        }
+    }
+
+    window.onload = carregarClientes;
 </script>

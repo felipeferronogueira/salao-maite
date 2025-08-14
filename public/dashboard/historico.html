@@ -64,6 +64,52 @@
         <div class="historico-container" id="historico"></div>
     </div>
 
+    <div id="modal-editar" class="modal" style="display:none;">
+        <div class="modal-content">
+            <form id="form-editar">
+                <span class="fechar" onclick="fecharModal()">&times;</span>
+                <h2 class="titulo_editar">Editar Atendimento</h2>
+                <label>Cliente:</label>
+                <select id="edit_cliente" required></select>
+
+                <label>Serviço:</label>
+                <select id="edit_servico" required onchange="toggleColoracaoFields()">
+                    <option value="">Selecione</option>
+                    <option value="4">Tonalizar</option>
+                    <option value="3">Reflexo</option>
+                    <option value="1">Corte</option>
+                    <option value="2">Coloração</option>
+                    <option value="5">Escova</option>
+                    <option value="6">Progressiva</option>
+                    <option value="7">Tratamento/Hidratação</option>
+                </select>
+
+                <label>Data:</label>
+                <input type="date" id="edit_data">
+
+                <label>Preço:</label>
+                <input type="number" id="edit_preco">
+
+                <div id="edit-coloracao" style="display:none;">
+                    <label>Marca:</label>
+                    <input type="text" id="edit_marca">
+
+                    <label>Quantidade de uso:</label>
+                    <input type="text" id="edit_quantidade">
+
+                    <label>Número da cor:</label>
+                    <input type="text" id="edit_cor">
+
+                    <label>Prazo de retorno (em dias):</label>
+                    <input type="number" id="edit_prazo">
+                </div>
+
+                <button type="submit">Salvar</button>
+            </form>
+
+        </div>
+    </div>
+
 </body>
 
 </html>
@@ -125,30 +171,137 @@
                     <h3>Serviço: ${item.servico}</h3>
                     <p><strong>Cliente:</strong> ${item.cliente}</p>
                     <p><strong>Telefone:</strong> ${item.telefone}</p>
-                    <p><strong>Observação:</strong> ${item.obs}</p>
+                    <p><strong>Observação:</strong> ${item.obs || ''}</p>
                     <p><strong>Data:</strong> ${item.data}</p>
                 `;
 
                 if (item.servico_id == 2) {
                     html += `
                         <p><strong>Preço:</strong> R$ ${item.preco}</p>
-                        <p><strong>Marca:</strong> ${item.marca}</p>
-                        <p><strong>Quantidade de uso:</strong> ${item.quantidade}</p>
-                        <p><strong>Número da cor:</strong> ${item.numero_cor}</p>
-                        <p><strong>Prazo de retorno(em dias):</strong> ${item.prazo_retorno}</p>
+                        <p><strong>Marca:</strong> ${item.marca || ''}</p>
+                        <p><strong>Quantidade de uso:</strong> ${item.quantidade || ''}</p>
+                        <p><strong>Número da cor:</strong> ${item.numero_cor || ''}</p>
+                        <p><strong>Prazo de retorno (em dias):</strong> ${item.prazo_retorno || ''}</p>
                     `;
                 } else {
                     html += `<p><strong>Preço:</strong> R$ ${item.preco}</p>`;
                 }
 
+                html += `
+                    <button class="Btn" onclick="editarAtendimento(${item.id})">Edit
+                        <svg class="svg" viewBox="0 0 512 512">
+                            <path d="M410.3 231l11.3-11.3-33.9-33.9-62.1-62.1L291.7 89.8l-11.3 11.3-22.6 22.6L58.6 322.9c-10.4 10.4-18 23.3-22.2 37.4L1 480.7c-2.5 8.4-.2 17.5 6.1 23.7s15.3 8.5 23.7 6.1l120.3-35.4c14.1-4.2 27-11.8 37.4-22.2L387.7 253.7 410.3 231zM160 399.4l-9.1 22.7c-4 3.1-8.5 5.4-13.3 6.9L59.4 452l23-78.1c1.4-4.9 3.8-9.4 6.9-13.3l22.7-9.1v32c0 8.8 7.2 16 16 16h32zM362.7 18.7L348.3 33.2 325.7 55.8 314.3 67.1l33.9 33.9 62.1 62.1 33.9 33.9 11.3-11.3 22.6-22.6 14.5-14.5c25-25 25-65.5 0-90.5L453.3 18.7c-25-25-65.5-25-90.5 0zm-47.4 168l-144 144c-6.2 6.2-16.4 6.2-22.6 0s-6.2-16.4 0-22.6l144-144c6.2-6.2 16.4-6.2 22.6 0s6.2 16.4 0 22.6z"></path>
+                        </svg>
+                    </button>
+                `;
+
                 card.innerHTML = html;
                 historicoDiv.appendChild(card);
             });
-
         } catch (err) {
             console.error('Erro ao carregar histórico:', err);
             historicoDiv.innerHTML = '<p>Erro ao carregar histórico.</p>';
         }
+    }
+
+
+    async function carregarClientesSelect(selectId) {
+        try {
+            const response = await fetch('/api/clientes');
+            const data = await response.json();
+
+            const select = document.getElementById(selectId);
+            select.innerHTML = '<option value="">Selecione um cliente</option>';
+
+            data.forEach(cliente => {
+                const option = document.createElement('option');
+                option.value = cliente.id;
+                option.textContent = cliente.nome;
+                select.appendChild(option);
+            });
+        } catch (err) {
+            console.error('Erro ao carregar clientes:', err);
+        }
+    }
+
+    function toggleColoracaoFields() {
+        const servicoId = document.getElementById('edit_servico').value;
+        const coloracaoDiv = document.getElementById('edit-coloracao');
+        coloracaoDiv.style.display = (servicoId == 2) ? 'block' : 'none';
+    }
+
+    async function editarAtendimento(id) {
+        try {
+            // Preenche o select de clientes antes de abrir
+            await carregarClientesSelect('edit_cliente');
+
+            const response = await fetch(`/api/historico/${id}`);
+            const item = await response.json();
+
+            document.getElementById('edit_cliente').value = item.cliente_id ?? '';
+            document.getElementById('edit_servico').value = item.servico_id ?? '';
+            document.getElementById('edit_data').value = item.data ? item.data.split('T')[0] : '';
+            document.getElementById('edit_preco').value = item.preco ?? '';
+
+            if (item.servico_id == 2) {
+                document.getElementById('edit_marca').value = item.marca ?? '';
+                document.getElementById('edit_quantidade').value = item.quantidade ?? '';
+                document.getElementById('edit_cor').value = item.numero_cor ?? '';
+                document.getElementById('edit_prazo').value = item.prazo_retorno ?? '';
+            }
+
+            toggleColoracaoFields();
+
+          // Abrir modal
+            document.getElementById('modal-editar').style.display = 'flex';
+            document.getElementById('form-editar').dataset.id = id;
+        } catch (err) {
+            console.error("Erro ao buscar atendimento:", err);
+        }
+    }
+
+    document.getElementById('form-editar').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const id = e.target.dataset.id;
+        const cliente_id = document.getElementById('edit_cliente').value;
+        const servico = document.getElementById('edit_servico').value;
+        const preco = document.getElementById('edit_preco').value;
+        const data = document.getElementById('edit_data').value;
+        const marca = document.getElementById('edit_marca').value || null
+        const quantidade = document.getElementById('edit_quantidade').value || null;
+        const cor = document.getElementById('edit_cor').value || null ;
+        const prazo = document.getElementById('edit_prazo').value || null;
+
+        try {
+            const response = await fetch(`/api/atendimento/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    cliente_id,
+                    servico,
+                    preco,
+                    data,
+                    marca,
+                    quantidade,
+                    cor,
+                    prazo
+                })
+            });
+
+            if (!response.ok) throw new Error('Erro ao atualizar atendimento');
+
+            alert('Atendimento atualizado com sucesso!');
+            fecharModal();
+            carregarHistorico();
+        } catch (err) {
+            console.error('Erro ao atualizar atendimento:', err);
+            alert('Erro ao salvar alterações.');
+        }
+    });
+
+    function fecharModal() {
+        document.getElementById('modal-editar').style.display = 'none';
     }
 
     carregarClientes();

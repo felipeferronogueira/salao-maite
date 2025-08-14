@@ -64,6 +64,55 @@ router.post('/cadastro', async (req, res) => {
   res.status(201).json({ message: 'Cliente cadastrada com sucesso', data });
 });
 
+// Busca cliente por ID
+router.get('/cliente/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const { data, error } = await supabase
+      .from('cliente')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      throw error;
+    }
+
+    if (!data) {
+      return res.status(404).json({ error: 'Cliente não encontrado' });
+    }
+
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao buscar cliente' });
+  }
+});
+
+// Atualiza cliente por ID
+router.put('/cliente/:id', async (req, res) => {
+  const { id } = req.params;
+  const { nome, telefone, obs } = req.body;
+
+  if (!nome || !telefone || !obs) {
+    return res.status(400).json({ error: 'Nome, telefone e observação são obrigatórios' });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('cliente')
+      .update({ nome, telefone, obs })
+      .eq('id', id);
+
+    if (error) throw error;
+
+    res.json({ message: 'Cliente atualizado com sucesso', data });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao atualizar cliente' });
+  }
+});
+
+
 
 // 📅 Função para calcular meses e dias entre hoje e a data
 function diferencaMesesDias(dataString) {
@@ -257,6 +306,34 @@ router.post('/atendimento', async (req, res) => {
   }
 });
 
+router.put('/atendimento/:id', async (req, res) => {
+  const { id } = req.params;
+  const { cliente_id, servico, preco, data, marca, quantidade, cor, prazo } = req.body;
+
+  try {
+    const { error } = await supabase
+      .from('atendimento')
+      .update({
+        fk_cliente: cliente_id,
+        fk_servico: servico,
+        preco,
+        data,
+        marca: marca || null,
+        quantidade_uso: quantidade || null,
+        numero_cor: cor || null,
+        prazo_retorno: prazo || null
+      })
+      .eq('id', id);
+
+    if (error) throw error;
+
+    res.status(200).json({ message: 'Atendimento atualizado com sucesso' });
+  } catch (err) {
+    console.error('Erro ao atualizar atendimento:', err);
+    res.status(500).json({ error: 'Erro ao atualizar atendimento' });
+  }
+});
+
 router.get('/historico/:clienteId', async (req, res) => {
   const { clienteId } = req.params;
 
@@ -274,6 +351,7 @@ router.get('/historico/:clienteId', async (req, res) => {
     if (error) throw error;
 
     const historico = data.map(item => ({
+      id: item.id,
       servico: item.servico.nome,
       servico_id: item.servico.id,
       cliente: item.cliente.nome,
