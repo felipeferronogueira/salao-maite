@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
     <link rel="stylesheet" href="../assets/css/historico.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
 </head>
 
 <body>
@@ -114,6 +115,9 @@
 
 </html>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+
 <script>
     function exportarAtendimentos() {
         const inicio = document.getElementById('data_inicio').value;
@@ -134,14 +138,15 @@
             const data = await response.json();
 
             const select = document.getElementById('clienteselect');
-            select.innerHTML = '<option value="">Selecione um cliente</option>';
-
             data.forEach(cliente => {
                 const option = document.createElement('option');
                 option.value = cliente.id;
                 option.textContent = cliente.nome;
                 select.appendChild(option);
             });
+
+            // Inicializar o Select2 após carregar os clientes
+            $('#cliente').select2(); // Use jQuery para aplicar o Select2
         } catch (err) {
             console.error('Erro ao carregar clientes:', err);
         }
