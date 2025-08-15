@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
     <link rel="stylesheet" href="../assets/css/atendimento.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
 </head>
 
 <body>
@@ -64,17 +65,17 @@
             </div>
 
             <div id="inputs-coloracao" style="display: none;">
-                <label for="marca">Marca:</label>
+                <label for="marca" id="marca_label">Marca:</label>
                 <input type="text" id="marca" name="marca">
 
-                <label for="quantidade">Quantidade de uso:</label>
+                <label for="quantidade" id="qtd_label">Quantidade de uso:</label>
                 <input type="text" id="quantidade" name="quantidade">
 
                 <label for="cor">Número da cor:</label>
                 <input type="text" id="cor" name="cor">
 
-                <label for="prazo">Prazo de retorno (em dias):</label>
-                <input type="number" id="prazo" name="prazo" min="1" required>
+                <label for="prazo" id="prazo_label">Prazo de retorno (em dias):</label>
+                <input type="number" id="prazo" name="prazo" min="1">
             </div>
 
             <button type="submit">Cadastrar</button>
@@ -84,6 +85,8 @@
     </div>
 
 </body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 
 <script>
     async function carregarClientes() {
@@ -98,6 +101,9 @@
                 option.textContent = cliente.nome;
                 select.appendChild(option);
             });
+
+            // Inicializar o Select2 após carregar os clientes
+            $('#cliente').select2(); // Use jQuery para aplicar o Select2
         } catch (err) {
             console.error('Erro ao carregar clientes:', err);
         }
@@ -108,6 +114,16 @@
         const coloracao = document.getElementById('inputs-coloracao');
         const basicos = document.getElementById('campos-basicos');
 
+        const marcaLabel = document.getElementById('marca_label');
+        const marca_id = document.getElementById('marca');
+
+        const quantidadeLabel = document.getElementById('qtd_label');
+        const quantidade_id = document.getElementById('quantidade');
+
+        const prazoLabel = document.getElementById('prazo_label');
+        const prazo_id = document.getElementById('prazo');
+
+
         if (servico === "") {
             basicos.style.display = "none";
             coloracao.style.display = "none";
@@ -116,7 +132,18 @@
             coloracao.style.display = "flex";
             document.getElementById('prazo').setAttribute('required', true);
             titulo.style.marginTop = '80px';
-        } else {
+        } else if (servico === '3') {
+            basicos.style.display = "flex";
+            coloracao.style.display = "flex";
+            marcaLabel.style.display = 'none'
+            marca_id.style.display = 'none'
+            quantidadeLabel.style.display = 'none'
+            quantidade_id.style.display = 'none'
+            prazoLabel.style.display = 'none'
+            prazo_id.style.display = 'none'
+            titulo.style.marginTop = '80px';
+        }
+        else {
             basicos.style.display = "flex";
             coloracao.style.display = "none";
             document.getElementById('prazo').removeAttribute('required');
@@ -141,6 +168,10 @@
             formData.quantidade = document.getElementById('quantidade').value;
             formData.cor = document.getElementById('cor').value;
             formData.prazo = document.getElementById('prazo').value;
+        }
+
+        if (servico === '3') {
+            formData.cor = document.getElementById('cor').value;
         }
 
         try {
